@@ -1,0 +1,20 @@
+k1=v1
+k2=v2
+k3=v3 ; comment here
+; comment again
+    [Section1]
+    sk1=v1
+    sk2=v2
+        [[section1-2]]
+        ssk1=v1
+        ssk2=v2
+        [[section1-3]]
+        srk1=thetestval
+    [section2]
+    q1=v1
+    q2=v2
+        [[section3]]
+        k=1
+        k2=2
+    [~]
+default3=v3
