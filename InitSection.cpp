@@ -51,10 +51,13 @@ namespace Init {
             return true;
         }
         return std::any_of(
-                std::begin(subsections), std::end(subsections), [&key](std::pair<std::string, InitSection> const& p) {
+                std::begin(subsections),
+                std::end(subsections),
+                [&key](std::pair<std::string, InitSection> const& p) {
                     auto const& [name, section] = p;
                     return section.hasEntryRecursive(key);
-                });
+                }
+        );
     }
 
 
@@ -101,7 +104,10 @@ namespace Init {
     }
 
     bool InitSection::updateEntryRecursive(
-            std::vector<std::string> const& section_path, std::string const& key, std::string const& value) {
+            std::vector<std::string> const& section_path,
+            std::string const&              key,
+            std::string const&              value
+    ) {
         InitSection *target = this;
         for (int i = 0; i < section_path.size(); i++) {
             auto const& path = section_path[i];

@@ -4,6 +4,10 @@ This is a collection of code for parsing INIT files in C++.
 
 See the document `Init file format specification.pdf` for information on the file type
 
+## Formats
+
+This library exists as an executable that you can run and test or you can use CMake to build a static library `libInitParserCPP.a` that you can link against in your own program
+
 ## Usage
 
 Given a file of INIT format named `test.init`
@@ -13,22 +17,22 @@ This library can be used as follows
 ```c++
 int main() {
     auto f = Init::InitFile::parse("test.init");
-    
+
     auto value = f.sections().getRecursive("some_key");
-    
+
     if (value.has_value()) {
         std::cout << *value << std::endl;
     }
-    
+
     auto section_path = f.getPathToEntry("some_other_key");
-    
+
     f.updateEntryRecursive(section_path, "some_other_key", "another_value");
-    
+
     std::ofstream out{};
     out.open("new_test.init");
     f.print(out);
     out.close()
-    
+
     // ... etc.
     return 0;
 }

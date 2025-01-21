@@ -31,4 +31,4 @@ namespace Init {
     std::string InitEntry::toString() const {
         return m_key + "=" + m_value;
     }
-}
+} // namespace Init
