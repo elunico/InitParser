@@ -32,7 +32,7 @@ namespace Init {
         /// this function returns the names of nested sections required to traverse to get the `key`
         /// if the key exists in the default section an empty vector is returned
         /// if std::nullopt is returned the key does not exist in the file
-        [[nodiscard]] std::optional<std::vector<InitSectionName> > getPathToEntry(std::string const& key) const;
+        [[nodiscard]] std::optional<std::vector<InitSectionName>> getPathToEntry(std::string const& key) const;
 
         [[nodiscard]] bool hasEntry(std::string const& name) const;
 
@@ -47,9 +47,9 @@ namespace Init {
         bool updateEntryRecursive(std::string const& path, std::string const& key, std::string const& value);
 
         bool updateEntryRecursive(
-            std::vector<std::string> const& section_path,
-            std::string const&              key,
-            std::string const&              value
+                std::vector<std::string> const& section_path,
+                std::string const&              key,
+                std::string const&              value
         );
 
         [[nodiscard]] std::size_t size() const noexcept;
@@ -62,6 +62,6 @@ namespace Init {
 
         void print(std::ostream& os = std::cout, int level = 1) const;
     };
-} // Init
+} // namespace Init
 
-#endif //INITSECTION_H
+#endif // INITSECTION_H

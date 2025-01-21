@@ -22,7 +22,7 @@ int main() {
     
     auto section_path = f.getPathToEntry("some_other_key");
     
-    f.updateKeyRecursive("some_key", "another_value");
+    f.updateEntryRecursive(section_path, "some_other_key", "another_value");
     
     std::ofstream out{};
     out.open("new_test.init");

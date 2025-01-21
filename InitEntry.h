@@ -34,7 +34,7 @@ namespace Init {
 
         [[nodiscard]] std::string toString() const;
     };
-}
+} // namespace Init
 
 
-#endif //INITENTRY_H
+#endif // INITENTRY_H

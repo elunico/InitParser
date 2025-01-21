@@ -1,5 +1,6 @@
 #include <fstream>
 #include <iostream>
+#include <sstream>
 
 #include "InitFile.h"
 
@@ -55,6 +56,10 @@ int main(int argc, char const *argv[]) {
     out.open("new_test.init");
     f.print(out);
     out.close();
+
+    std::stringstream ss;
+    f.print(ss);
+    std::cout << ss.str() << std::endl;
 
 
     return 0;

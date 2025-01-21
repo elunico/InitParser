@@ -13,7 +13,9 @@ namespace Init {
             std::string s;
             while (!file.eof()) {
                 int const c = file.get();
-                if (c == stop) { break; }
+                if (c == stop) {
+                    break;
+                }
                 s += static_cast<char>(c);
             }
             return s;
@@ -52,7 +54,7 @@ namespace Init {
             }
             return n;
         }
-    }
+    } // namespace Util
 
     void InitFile::pop_section(std::vector<InitSection *>& secstack) {
         secstack.pop_back();
@@ -101,6 +103,7 @@ namespace Init {
 
             // deal with section headers (start/end)
             if (c == '[') {
+                // determine the depth of the subsection that is about to be read
                 int prox = 0;
                 while (s.good() && !s.eof() && c == '[') {
                     prox += 1;
@@ -111,6 +114,7 @@ namespace Init {
                 }
                 // after the [
                 if (c == '~') {
+                    // ~ simply ends the section concordant with the subsection level indicated by the brackets
                     // pop while prox <= subsection level
                     while (prox <= subsectionLevel) {
                         pop_section(secstack);
@@ -119,17 +123,23 @@ namespace Init {
                     // discard closing brackets
                     Util::gulp_to_char(s, '\n');
                 } else {
+                    // read the section name
                     std::string name = Util::consume_section_name(s, c);
                     // discard closing brackets
                     Util::gulp_to_char(s, '\n');
 
+                    // this section is either the same level as the current section meaning that that current section is
+                    // closed and the new section is opened
                     if (prox == (subsectionLevel)) {
                         // creating a new subsection at the same level requires 1 pop and 1 push
                         pop_section(secstack);
                         secstack.back()->subsections[name] = InitSection(name);
                         secstack.push_back(&secstack.back()->subsections[name]);
                     } else if (prox < subsectionLevel) {
-                        // creating a higher subsection requires popping and decr subsection level until it is one less than prox then pushing
+                        // or the new section is a higher level than the current section closing the current section and
+                        // opening a new higher section
+                        // creating a higher subsection requires popping and decr
+                        // subsection level until it is one less than prox then pushing
                         while (prox <= subsectionLevel) {
                             pop_section(secstack);
                             subsectionLevel--;
@@ -137,6 +147,8 @@ namespace Init {
                         secstack.back()->subsections[name] = InitSection(name);
                         secstack.push_back(&secstack.back()->subsections[name]);
                     } else if (prox > subsectionLevel) {
+                        // or the new section is a lower level than the current section opening a new subsection of the
+                        // current section
                         // creating a deeper subsection requires only pushing
                         secstack.back()->subsections[name] = InitSection(name);
                         secstack.push_back(&secstack.back()->subsections[name]);
@@ -147,23 +159,25 @@ namespace Init {
                 continue;
             }
 
-
-            // read key and value
+            // if the current character is not whitespace, comments, or section headers, it must be a key value pair
+            // read key
             std::string k = Util::consume_key(s, c);
 
-            c = s.get(); // discard =
+            // discard =
+            c = s.get();
 
+            // read the value
             std::string v = Util::consume_value(s, c);
+
+            // eat the rest of the line in case there's a comment
             if (c != '\n') {
                 Util::gulp_to_char(s, '\n');
             }
 
+            // add the key value pair to the current section
             secstack.back()->addEntry(InitEntry{k, v});
         }
-        // do not put back the first section which is always a pointer to the existing default section
-        // while (secstack.size() > 1) {
-        // pop_section(file, secstack);
-        // }
+
         return file;
     }
 
@@ -175,6 +189,4 @@ namespace Init {
             section.print(os);
         }
     }
-
-
-} // Init
+} // namespace Init

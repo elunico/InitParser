@@ -4,10 +4,10 @@
 
 #include "InitSection.h"
 
+#include <__filesystem/path.h>
 #include <iostream>
 #include <numeric>
 #include <utility>
-#include <__filesystem/path.h>
 
 namespace Init {
     bool InitSection::getPathImpl(std::string const& key, std::vector<std::string>& path) const {
@@ -32,9 +32,8 @@ namespace Init {
         entries[entry.key()] = entry;
     }
 
-    [[nodiscard]] std::optional<std::vector<InitSection::InitSectionName> > InitSection::getPathToEntry(
-        std::string const& key
-    ) const {
+    [[nodiscard]] std::optional<std::vector<InitSection::InitSectionName>>
+    InitSection::getPathToEntry(std::string const& key) const {
         std::vector<InitSectionName> path{};
         if (getPathImpl(key, path)) {
             std::ranges::reverse(path);
@@ -52,11 +51,10 @@ namespace Init {
             return true;
         }
         return std::any_of(
-            std::begin(subsections), std::end(subsections), [&key] (std::pair<std::string, InitSection> const& p) {
-                auto const& [name, section] = p;
-                return section.hasEntryRecursive(key);
-            }
-        );
+                std::begin(subsections), std::end(subsections), [&key](std::pair<std::string, InitSection> const& p) {
+                    auto const& [name, section] = p;
+                    return section.hasEntryRecursive(key);
+                });
     }
 
 
@@ -89,11 +87,7 @@ namespace Init {
         return false;
     }
 
-    bool InitSection::updateEntryRecursive(
-        std::string const& path,
-        std::string const& key,
-        std::string const& value
-    ) {
+    bool InitSection::updateEntryRecursive(std::string const& path, std::string const& key, std::string const& value) {
         std::vector<std::string> result;
         for (int i = 0; i < path.size(); i++) {
             std::string comp{};
@@ -107,10 +101,7 @@ namespace Init {
     }
 
     bool InitSection::updateEntryRecursive(
-        std::vector<std::string> const& section_path,
-        std::string const&              key,
-        std::string const&              value
-    ) {
+            std::vector<std::string> const& section_path, std::string const& key, std::string const& value) {
         InitSection *target = this;
         for (int i = 0; i < section_path.size(); i++) {
             auto const& path = section_path[i];
@@ -124,11 +115,10 @@ namespace Init {
     }
 
     [[nodiscard]] std::size_t InitSection::sizeRecursive() const noexcept {
-        return entries.size() + std::accumulate(
-                   std::begin(subsections), std::end(subsections), 0, [] (auto acc, auto s) {
-                       return acc + s.second.size();
-                   }
-               );
+        return entries.size() +
+               std::accumulate(std::begin(subsections), std::end(subsections), 0, [](auto acc, auto s) {
+                   return acc + s.second.size();
+               });
     }
 
     [[nodiscard]] InitSection const& InitSection::getSubsection(std::string const& key) const {
@@ -149,4 +139,4 @@ namespace Init {
             section.print(os, level + 1);
         }
     }
-} // Init
+} // namespace Init

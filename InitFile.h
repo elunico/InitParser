@@ -22,8 +22,7 @@ namespace Init {
         InitSection const& sections() const noexcept;
 
         void print(std::ostream& os = std::cout) const;
-
     };
-} // Init
+} // namespace Init
 
-#endif //INITFILE_H
+#endif // INITFILE_H

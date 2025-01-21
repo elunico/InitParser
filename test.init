@@ -13,8 +13,12 @@ k3=v3 ; comment here
     [section2]
     q1=v1
     q2=v2
-        [[section3]]
+        [[section3]] ; another comment?
         k=1
+            [[[3bracket section]]]
+            some3key=otherval
+            other=val
+            [[[~]]]
         k2=2
     [~]
 default3=v3

@@ -3,3 +3,6 @@ cmake-build-optimized
 main.dSYM
 main
 .idea
+.cache
+build
+new_test.init
