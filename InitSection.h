@@ -4,6 +4,7 @@
 
 #ifndef INITSECTION_H
 #define INITSECTION_H
+#include <iostream>
 #include <unordered_map>
 #include <vector>
 
@@ -59,7 +60,7 @@ namespace Init {
 
         [[nodiscard]] InitSection& getSubsection(std::string const& key);
 
-        void print(int level = 1) const;
+        void print(std::ostream& os = std::cout, int level = 1) const;
     };
 } // Init
 

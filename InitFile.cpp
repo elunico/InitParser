@@ -167,12 +167,14 @@ namespace Init {
         return file;
     }
 
-    void InitFile::print() const {
+    void InitFile::print(std::ostream& os) const {
         for (auto const& [name, entry]: defaultSection.entries) {
-            std::cout << "0E:" << entry.key() << "=" << entry.value() << std::endl;
+            os << entry.key() << "=" << entry.value() << std::endl;
         }
         for (auto const& [sec_name, section]: defaultSection.subsections) {
-            section.print();
+            section.print(os);
         }
     }
+
+
 } // Init

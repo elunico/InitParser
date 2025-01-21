@@ -4,6 +4,8 @@
 
 #ifndef INITFILE_H
 #define INITFILE_H
+#include <iostream>
+
 #include "InitSection.h"
 
 namespace Init {
@@ -19,7 +21,8 @@ namespace Init {
 
         InitSection const& sections() const noexcept;
 
-        void print() const;
+        void print(std::ostream& os = std::cout) const;
+
     };
 } // Init
 

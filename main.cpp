@@ -1,3 +1,4 @@
+#include <fstream>
 #include <iostream>
 
 #include "InitFile.h"
@@ -49,6 +50,11 @@ int main(int argc, char const *argv[]) {
 
     auto e = f.sections().getEntryRecursive("srk1");
     std::cout << e.value() << std::endl;
+
+    std::ofstream out{};
+    out.open("new_test.init");
+    f.print(out);
+    out.close();
 
 
     return 0;

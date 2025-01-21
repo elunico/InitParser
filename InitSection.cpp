@@ -139,13 +139,14 @@ namespace Init {
         return subsections.at(key);
     }
 
-    void InitSection::print(int level) const {
-        std::cout << std::string(level, '[') << name << std::string(level, ']') << std::endl;
+    void InitSection::print(std::ostream& os, int level) const {
+        std::string spacing(level * 4, ' ');
+        os << spacing << std::string(level, '[') << name << std::string(level, ']') << std::endl;
         for (const auto& entry: entries) {
-            std::cout << level << "E: " << entry.first << "=" << entry.second.value() << std::endl;
+            os << spacing << entry.first << "=" << entry.second.value() << std::endl;
         }
         for (const auto& [name, section]: subsections) {
-            section.print(level + 1);
+            section.print(os, level + 1);
         }
     }
 } // Init
