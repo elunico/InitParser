@@ -21,12 +21,27 @@ namespace Init {
             return s;
         }
 
+        static int consume_escape(std::ifstream& file) {
+            int const d = file.get();
+            if (d != '\\' && d != '=' && d != ';') {
+                throw std::invalid_argument("Invalid escape character");
+            }
+            return d;
+        }
+
 
         static std::string consume_key(std::ifstream& s, int& c) {
             std::string k;
             while (c != '=' && c != EOF) {
                 k.push_back(c);
                 c = s.get();
+                if (c == '\\') {
+                    c = consume_escape(s);
+                    // c is now the escaped char as a normal acceptable char continue the loop to
+                    // push_back then get the next c
+                    continue;
+                }
+
                 if (c == '\n' || c == ';') {
                     throw std::invalid_argument("Key ended with no corresponding value");
                 }
@@ -39,6 +54,9 @@ namespace Init {
             while (c != '\n' && c != EOF && c != ';') {
                 v.push_back(c);
                 c = s.get();
+                if (c == '\\') {
+                    c = consume_escape(s);
+                }
             }
             return v;
         }

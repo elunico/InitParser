@@ -10,7 +10,7 @@
 
 namespace Init {
     class InitFile {
-        InitSection defaultSection{"<default>"};
+        InitSection defaultSection{InitSection::DEFAULT_NAME};
 
         static void pop_section(std::vector<InitSection *>& secstack);
 
