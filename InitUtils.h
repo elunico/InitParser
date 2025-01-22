@@ -8,7 +8,9 @@
 
 #include "InitSection.h"
 
-std::ostream &operator<<(std::ostream &os,
-                         Init::InitSection::ResolutionType const &name);
+std::ostream& operator<<(
+    std::ostream&                            os,
+    Init::InitSection::ResolutionType const& name
+);
 
 #endif //INITUTILS_H

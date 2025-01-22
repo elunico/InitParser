@@ -19,8 +19,8 @@ std::ostream& operator<<(
             os << "NONE";
             break;
         default:
-            os << "UNKNOWN" << " " << (int)name;
-        break;
+            os << "UNKNOWN" << " " << (int) name;
+            break;
     }
     return os;
 }

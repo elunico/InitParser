@@ -3,28 +3,34 @@
 //
 
 #include "InitFile.h"
+#include "InitException.h"
 
 #include <fstream>
 #include <iostream>
 
 namespace Init {
     namespace Util {
-        static auto gulp_to_char(std::ifstream& file, char stop) -> std::string {
-            std::string s;
-            while (!file.eof()) {
-                int const c = file.get();
-                if (c == stop) {
-                    break;
-                }
-                s += static_cast<char>(c);
-            }
-            return s;
+        static int gulp_whitespace(std::ifstream& file) {
+            int c{};
+            while (!file.eof() && (c = file.get()) != EOF && (c == ' ' || c == '\t')) {}
+            return c;
+        }
+
+        static void gulp_close_brackets(std::ifstream& file) {
+            int c{};
+            while (!file.eof() && (c = file.get()) != EOF && c == ']') {}
+            file.putback(c);
+        }
+
+        static void gulp_to_char(std::ifstream& file, char stop) {
+            int c;
+            while (!file.eof() && (c = file.get()) != EOF && c != stop);
         }
 
         static int consume_escape(std::ifstream& file) {
             int const d = file.get();
             if (d != '\\' && d != '=' && d != ';') {
-                throw std::invalid_argument("Invalid escape character");
+                throw ParseException("Invalid escape character");
             }
             return d;
         }
@@ -43,7 +49,7 @@ namespace Init {
                 }
 
                 if (c == '\n' || c == ';') {
-                    throw std::invalid_argument("Key ended with no corresponding value");
+                    throw KeySyntaxError("Key ended with no corresponding value");
                 }
             }
             return k;
@@ -67,7 +73,7 @@ namespace Init {
                 n.push_back(c);
                 c = s.get();
                 if (c == '\n' || c == ';') {
-                    throw std::invalid_argument("section name with unterminated square brackets");
+                    throw SectionSyntaxError("section name with unterminated square brackets");
                 }
             }
             return n;
@@ -86,7 +92,7 @@ namespace Init {
         return defaultSection;
     }
 
-    InitFile InitFile::parse(const std::string& fileName) {
+    InitFile InitFile::parse(std::string const& fileName) {
         InitFile file{};
 
         std::ifstream s;
@@ -127,7 +133,7 @@ namespace Init {
                     prox += 1;
                     c = s.get();
                     if (prox > (subsectionLevel + 1)) {
-                        throw std::invalid_argument("Subsection level too deeply nested. Missing parent subsection");
+                        throw InvalidSubsection("Subsection level too deeply nested. Missing parent subsection");
                     }
                 }
                 // after the [
@@ -144,33 +150,36 @@ namespace Init {
                     // read the section name
                     std::string name = Util::consume_section_name(s, c);
                     // discard closing brackets
+                    Util::gulp_close_brackets(s);
+
+                    int d = Util::gulp_whitespace(s);
+
+                    if (d != ';' && d != '\n') {
+                        throw SectionSyntaxError("Extraneous text after section name. Keys must be on a new line");
+                    }
+
                     Util::gulp_to_char(s, '\n');
 
-                    // this section is either the same level as the current section meaning that that current section is
-                    // closed and the new section is opened
-                    if (prox == (subsectionLevel)) {
-                        // creating a new subsection at the same level requires 1 pop and 1 push
+                    // CASE 1: new section is the same level as the current section meaning that that current section is
+                    // closed and the new section is opened: this requires 1 pop if prox == subsectionLevel then pushing
+                    // the new section
+                    //
+                    // CASE 2: new section is a higher level (closer to 0, aka default section) than the current
+                    // section closing the current section and all sections which are lower than the impending
+                    // new section. This requires several pops until the levels work out. Then it requires 1 push
+                    // to open the new section
+                    //
+                    // CASE 3: new section is a lower level than the current section opening a new subsection of the
+                    // current section; creating a deeper subsection requires only pushing with no popping if prox > subsectionLevel
+                    // @brief: pop 1 time for equal section, many times for higher section, none for lower section
+                    while (prox <= subsectionLevel) {
                         pop_section(secstack);
-                        secstack.back()->subsections[name] = InitSection(name);
-                        secstack.push_back(&secstack.back()->subsections[name]);
-                    } else if (prox < subsectionLevel) {
-                        // or the new section is a higher level than the current section closing the current section and
-                        // opening a new higher section
-                        // creating a higher subsection requires popping and decr
-                        // subsection level until it is one less than prox then pushing
-                        while (prox <= subsectionLevel) {
-                            pop_section(secstack);
-                            subsectionLevel--;
-                        }
-                        secstack.back()->subsections[name] = InitSection(name);
-                        secstack.push_back(&secstack.back()->subsections[name]);
-                    } else if (prox > subsectionLevel) {
-                        // or the new section is a lower level than the current section opening a new subsection of the
-                        // current section
-                        // creating a deeper subsection requires only pushing
-                        secstack.back()->subsections[name] = InitSection(name);
-                        secstack.push_back(&secstack.back()->subsections[name]);
+                        subsectionLevel--;
                     }
+
+                    // push the new section after appropriate closing of existing sections
+                    secstack.back()->subsections[name] = InitSection(name);
+                    secstack.push_back(&secstack.back()->subsections[name]);
                     subsectionLevel = prox;
                 }
                 // section opener or closer is read so continue

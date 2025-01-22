@@ -64,11 +64,10 @@ namespace Init {
 
         bool updateEntry(std::string const& key, std::string const& value);
 
-        bool updateEntryRecursive(std::string const& path, std::string const& key, std::string const& value);
+        bool updateEntryRecursive(std::string const& path, std::string const& value);
 
         bool updateEntryRecursive(
             std::vector<std::string> const& section_path,
-            std::string const&              key,
             std::string const&              value
         );
 

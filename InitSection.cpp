@@ -13,7 +13,8 @@
 namespace Init {
     bool InitSection::getPathImpl(std::string const& key, std::vector<std::string>& path) const {
         if (entries.contains(key)) {
-            // path.push_back(name);
+            // include key in path so it can be used in canResolve & updateEntryRecursive
+            path.push_back(key);
             return true;
         }
         for (auto const& [name, section]: subsections) {
@@ -51,9 +52,8 @@ namespace Init {
         if (entries.contains(key)) {
             return true;
         }
-        return std::any_of(
-            std::begin(subsections),
-            std::end(subsections),
+        return std::ranges::any_of(
+            subsections,
             [&key] (std::pair<std::string, InitSection> const& p) {
                 auto const& [name, section] = p;
                 return section.hasEntryRecursive(key);
@@ -177,22 +177,22 @@ namespace Init {
         return result;
     }
 
-    bool InitSection::updateEntryRecursive(std::string const& path, std::string const& key, std::string const& value) {
-        std::vector<std::string> result = path_to_components(path);
-        return updateEntryRecursive(result, key, value);
+    bool InitSection::updateEntryRecursive(std::string const& path, std::string const& value) {
+        return updateEntryRecursive(path_to_components(path), value);
     }
 
     bool InitSection::updateEntryRecursive(
         std::vector<std::string> const& section_path,
-        std::string const&              key,
         std::string const&              value
     ) {
-        InitSection *target = this;
-        for (int i = 0; i < section_path.size(); i++) {
+        auto target = this;
+        // navigate through all subsections of the past, except the last component
+        // which is the name of the entry to update
+        for (int i = 0; i < section_path.size() - 1; i++) {
             auto const& path = section_path[i];
             target           = &target->getSubsection(path);
         }
-        return target->updateEntry(key, value);
+        return target->updateEntry(section_path.back(), value);
     }
 
     [[nodiscard]] std::size_t InitSection::size() const noexcept {
@@ -219,10 +219,10 @@ namespace Init {
     void InitSection::print(std::ostream& os, int level) const {
         std::string spacing(level * 4, ' ');
         os << spacing << std::string(level, '[') << name << std::string(level, ']') << std::endl;
-        for (const auto& entry: entries) {
+        for (auto const& entry: entries) {
             os << spacing << entry.first << "=" << entry.second.value() << std::endl;
         }
-        for (const auto& [name, section]: subsections) {
+        for (auto const& [name, section]: subsections) {
             section.print(os, level + 1);
         }
     }

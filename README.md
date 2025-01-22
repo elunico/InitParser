@@ -51,3 +51,22 @@ You can use the `getPathToEntry()` method to determine the subsection path that 
 - A **present** optional of an **empty vector** if the key is contained in the default section (no section name is
   present or required to retrieve it)
 - `std::nullopt` if the key is not found anywhere in the hierarchy
+
+## Paths
+
+Some methods take a `std::string` parameter called `path`. A path is composed of the following
+
+- Section names joined by a `/` (forward slash)
+- Optionally, an entry key as the last component of the path. If an entry key is present, the path represents the path
+  to that entry. If the path ends with the name of a section, it is the path to that section.
+
+Two methods use these paths
+
+First is the `InitSection::ResolutionType InitSection::canResolve(std::string const& path)` method to determine if a
+section or entry exists.
+
+`InitSection::ResolutionType` is an enum with the cases `SECTION`, `ENTRY`, and `NONE` which tells you what the path
+resolves to in the `InitFile`
+
+Second is the `bool InitSection::updateEntryRecursive(std::string const& path, std::string const& value)` which can be
+used to update the **entry** pointed to by `path` with the value `value`.
