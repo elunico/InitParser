@@ -10,12 +10,15 @@
 #include <concepts>
 #include <utility>
 #include "InitEntry.h"
+#include "InitException.h"
 #include "InitFile.h"
 
 namespace Init {
     namespace Private {
-        template <class L, class K, class V, class R> concept map_operator =
-                requires (L op, std::pair<K, V> pair, R result) { { op(result, pair) } -> std::same_as<R>; };
+        template <class L, class K, class V, class R>
+        concept map_operator = requires (L op, std::pair<K, V> pair, R result) {
+            { op(result, pair) } -> std::same_as<R>;
+        };
 
         template <typename R, typename K, typename V, map_operator<K, V, R> Lambda>
         R accumulate(std::unordered_map<K, V> const& vec, R init, Lambda operation) {
@@ -73,37 +76,37 @@ namespace Init {
         );
     }
 
-    [[nodiscard]] InitSection::ResolutionType InitSection::canResolveHelper(
+    [[nodiscard]] std::pair<InitSection::ResolutionType, void *> InitSection::canResolveHelper(
         std::vector<std::string> const& path,
         int const                       n
-    ) const {
+    ) {
         if (n >= path.size()) {
-            return ResolutionType::NONE;
+            return std::make_pair(ResolutionType::NONE, nullptr);
         }
         if (n == path.size() - 1) {
             if (name == path[n]) {
-                return ResolutionType::SECTION;
+                return std::make_pair(ResolutionType::SECTION, this);
             }
-            for (auto const& [name, entry]: entries) {
+            for (auto& [name, entry]: entries) {
                 if (name == path[n]) {
-                    return ResolutionType::ENTRY;
+                    return std::make_pair(ResolutionType::ENTRY, &entry);
                 }
             }
-            return ResolutionType::NONE;
+            return std::make_pair(ResolutionType::NONE, nullptr);
         }
         // the default section - parent to all subsections implicitly - is not named in a path
         // and so it is always acceptable to traverse down that section
         if ((name == path[n] && n != path.size() - 1) || isDefaultNamed()) {
-            for (auto const& [name, section]: subsections) {
-                if (auto r = section.canResolveHelper(path, (isDefaultNamed()) ? n : (n + 1));
-                    r != ResolutionType::NONE) {
-                    return r;
+            for (auto & [name, section]: subsections) {
+                if (auto res = section.canResolveHelper(path, (isDefaultNamed()) ? n : (n + 1));
+                    res.first != ResolutionType::NONE) {
+                    return res;
                 }
             }
             // finally if this is the last section, check for an entry
             return canResolveHelper(path, n + 1);
         }
-        return ResolutionType::NONE;
+        return std::make_pair(ResolutionType::NONE, nullptr);
     }
 
     bool InitSection::isDefaultNamed() const {
@@ -112,9 +115,45 @@ namespace Init {
 
     [[nodiscard]] InitSection::ResolutionType InitSection::canResolve(std::string const& path) const {
         auto p = path_to_components(path);
-        return canResolveHelper(p, 0);
+        // method is const
+        return const_cast<InitSection*>(this)->canResolveHelper(p, 0).first;
     }
 
+    [[nodiscard]] InitEntry& InitSection::getEntryExact(std::string const& path) {
+        auto p = path_to_components(path);
+        switch (auto [kind, ptr] = canResolveHelper(p, 0); kind) {
+            case ResolutionType::NONE:
+                throw MissingEntry("InitSection::getEntryExact: no such entry");
+            case ResolutionType::SECTION:
+                throw InitException("InitSection::getEntryExact: can't get section ");
+            case ResolutionType::ENTRY:
+                return *static_cast<InitEntry *>(ptr);
+            default:
+                throw std::runtime_error("InitSection::getEntryExact: unknown branch");
+        }
+    }
+
+    [[nodiscard]] InitSection& InitSection::getSectionExact(std::string const& path) {
+        auto p = path_to_components(path);
+        switch (auto [kind, ptr] = canResolveHelper(p, 0); kind) {
+            case ResolutionType::NONE:
+                throw MissingEntry("InitSection::getSectionExact: no such section");
+            case ResolutionType::SECTION:
+                return *static_cast<InitSection *>(ptr);
+            case ResolutionType::ENTRY:
+                throw InitException("InitSection::getSectionExact: can't get entry ");
+            default:
+                throw std::runtime_error("InitSection::getSectionExact: unknown branch");
+        }
+    }
+
+    [[nodiscard]] InitEntry const& InitSection::getEntryExact(std::string const& path) const {
+        return const_cast<InitSection *>(this)->getEntryExact(path);
+    }
+
+    [[nodiscard]] InitSection const& InitSection::getSectionExact(std::string const& path) const {
+        return const_cast<InitSection *>(this)->getSectionExact(path);
+    }
 
     [[nodiscard]] std::optional<std::string> InitSection::getEntry(std::string const& key) const {
         if (entries.contains(key)) {
@@ -213,7 +252,9 @@ namespace Init {
 
     [[nodiscard]] std::size_t InitSection::sizeRecursive() const noexcept {
         using Private::accumulate;
-        return entries.size() + accumulate(subsections, 0uz, [] (auto acc, auto s) { return acc + s.second.sizeRecursive(); });
+        return entries.size() + accumulate(
+                   subsections, 0uz, [] (auto acc, auto s) { return acc + s.second.sizeRecursive(); }
+               );
         // std::accumulate(
         // std::begin(subsections), std::end(subsections), 0, [] (auto acc, auto s) {
         // return acc + s.second.size();
@@ -233,7 +274,8 @@ namespace Init {
         std::string spacing(level * 4, ' ');
         os << spacing << std::string(level, '[') << name << std::string(level, ']') << std::endl;
         for (auto const& entry: entries) {
-            os << spacing << InitFile::escaped(entry.first) << "=" << InitFile::escaped(entry.second.value()) << std::endl;
+            os << spacing << InitFile::escaped(entry.first) << "=" << InitFile::escaped(entry.second.value()) <<
+                    std::endl;
         }
         for (auto const& [name, section]: subsections) {
             section.print(os, level + 1);

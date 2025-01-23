@@ -15,7 +15,7 @@ namespace Init {
     public:
         enum class ResolutionType { NONE, ENTRY, SECTION };
 
-        constexpr static const std::string DEFAULT_NAME = "<default>";
+        constexpr static std::string DEFAULT_NAME = "<default>";
 
     private:
         std::string                                  name{DEFAULT_NAME};
@@ -26,7 +26,10 @@ namespace Init {
 
         bool getPathImpl(std::string const& key, std::vector<std::string>& path) const;
 
-        [[nodiscard]] ResolutionType canResolveHelper(std::vector<std::string> const& path, int n) const;
+        [[nodiscard]] std::pair<ResolutionType, void *> canResolveHelper(
+            std::vector<std::string> const& path,
+            int                             n
+        );
 
         bool isDefaultNamed() const;
 
@@ -49,6 +52,14 @@ namespace Init {
         // [[nodiscard]] std::optional<std::vector<InitSectionName>> getPathToSubsection(std::string const& name) const;
 
         [[nodiscard]] ResolutionType canResolve(std::string const& path) const;
+
+        InitEntry const& getEntryExact(std::string const& path) const;
+
+        InitEntry& getEntryExact(std::string const& path);
+
+        InitSection const& getSectionExact(std::string const& path) const;
+
+        InitSection& getSectionExact(std::string const& path);
 
         [[nodiscard]] bool hasEntry(std::string const& name) const;
 

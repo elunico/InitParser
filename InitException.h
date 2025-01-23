@@ -27,6 +27,10 @@ namespace Init {
         using InitException::InitException;
     };
 
+    class MissingEntry : public InitException {
+        using InitException::InitException;
+    };
+
     class KeySyntaxError : public ParseException {
         using ParseException::ParseException;
     };
