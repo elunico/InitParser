@@ -19,7 +19,7 @@ namespace Init {
         static void gulp_close_brackets(std::ifstream& file) {
             int c{};
             while (!file.eof() && (c = file.get()) != EOF && c == ']') {}
-            file.putback(c);
+            file.unget();
         }
 
         static void gulp_to_char(std::ifstream& file, char stop) {
@@ -29,7 +29,7 @@ namespace Init {
 
         static int consume_escape(std::ifstream& file) {
             int const d = file.get();
-            if (d != '\\' && d != '=' && d != ';') {
+            if (!InitFile::is_escape_char(d)) {
                 throw ParseException("Invalid escape character");
             }
             return d;
@@ -43,8 +43,11 @@ namespace Init {
                 c = s.get();
                 if (c == '\\') {
                     c = consume_escape(s);
-                    // c is now the escaped char as a normal acceptable char continue the loop to
-                    // push_back then get the next c
+                    // add the escaped char to the data
+                    k.push_back(c);
+                    // retrieve the next one
+                    c = s.get();
+                    // continue so it is pushed back
                     continue;
                 }
 
@@ -80,6 +83,17 @@ namespace Init {
         }
     } // namespace Util
 
+    std::vector<char> const InitFile::ESCAPE_CHARS{{'=', ';', '\\'}};
+
+    bool InitFile::is_escape_char(char c) {
+        for (auto const& e: InitFile::ESCAPE_CHARS) {
+            if (c == e) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     void InitFile::pop_section(std::vector<InitSection *>& secstack) {
         secstack.pop_back();
     }
@@ -90,6 +104,17 @@ namespace Init {
 
     InitSection const& InitFile::sections() const noexcept {
         return defaultSection;
+    }
+
+    std::string InitFile::escaped(std::string const& key) {
+        std::string result{};
+        for (int i = 0; i < key.size(); i++) {
+            if (is_escape_char(key[i])) {
+                result.push_back('\\');
+            }
+            result.push_back(key[i]);
+        }
+        return result;
     }
 
     InitFile InitFile::parse(std::string const& fileName) {
@@ -154,24 +179,31 @@ namespace Init {
 
                     int d = Util::gulp_whitespace(s);
 
+                    // if the line doesn't end or have a comment there is extra text
                     if (d != ';' && d != '\n') {
                         throw SectionSyntaxError("Extraneous text after section name. Keys must be on a new line");
                     }
 
-                    Util::gulp_to_char(s, '\n');
+                    // if after whitespace is a newline, we are on the first key in the section
+                    // without the d == ';' check we eat the first key in each section
+                    if (d == ';') {
+                        Util::gulp_to_char(s, '\n');
+                    }
 
-                    // CASE 1: new section is the same level as the current section meaning that that current section is
-                    // closed and the new section is opened: this requires 1 pop if prox == subsectionLevel then pushing
-                    // the new section
-                    //
-                    // CASE 2: new section is a higher level (closer to 0, aka default section) than the current
-                    // section closing the current section and all sections which are lower than the impending
-                    // new section. This requires several pops until the levels work out. Then it requires 1 push
-                    // to open the new section
-                    //
-                    // CASE 3: new section is a lower level than the current section opening a new subsection of the
-                    // current section; creating a deeper subsection requires only pushing with no popping if prox > subsectionLevel
-                    // @brief: pop 1 time for equal section, many times for higher section, none for lower section
+                    /*
+                     CASE 1: new section is the same level as the current section meaning that that current section is
+                     closed and the new section is opened: this requires 1 pop if prox == subsectionLevel then pushing
+                     the new section
+
+                     CASE 2: new section is a higher level (closer to 0, aka default section) than the current
+                     section closing the current section and all sections which are lower than the impending
+                     new section. This requires several pops until the levels work out. Then it requires 1 push
+                     to open the new section
+
+                     CASE 3: new section is a lower level than the current section opening a new subsection of the
+                     current section; creating a deeper subsection requires only pushing with no popping if prox > subsectionLevel
+                     @brief: pop 1 time for equal section, many times for higher section, none for lower section
+                     */
                     while (prox <= subsectionLevel) {
                         pop_section(secstack);
                         subsectionLevel--;
@@ -210,7 +242,7 @@ namespace Init {
 
     void InitFile::print(std::ostream& os) const {
         for (auto const& [name, entry]: defaultSection.entries) {
-            os << entry.key() << "=" << entry.value() << std::endl;
+            os << escaped(entry.key()) << "=" << escaped(entry.value()) << std::endl;
         }
         for (auto const& [sec_name, section]: defaultSection.subsections) {
             section.print(os);

@@ -14,7 +14,7 @@ namespace Init {
 
         explicit InitException(std::string const& w);
 
-        virtual char const *what() const noexcept override ;
+        virtual char const *what() const noexcept override;
 
         virtual ~InitException() override;
     };

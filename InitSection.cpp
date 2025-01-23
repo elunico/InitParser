@@ -7,10 +7,22 @@
 #include <__filesystem/path.h>
 #include <iostream>
 #include <numeric>
+#include <concepts>
 #include <utility>
 #include "InitEntry.h"
+#include "InitFile.h"
 
 namespace Init {
+    namespace Private {
+        template <class L, class K, class V, class R> concept map_operator =
+                requires (L op, std::pair<K, V> pair, R result) { { op(result, pair) } -> std::same_as<R>; };
+
+        template <typename R, typename K, typename V, map_operator<K, V, R> Lambda>
+        R accumulate(std::unordered_map<K, V> const& vec, R init, Lambda operation) {
+            return std::accumulate(std::begin(vec), std::end(vec), init, operation);
+        }
+    }
+
     bool InitSection::getPathImpl(std::string const& key, std::vector<std::string>& path) const {
         if (entries.contains(key)) {
             // include key in path so it can be used in canResolve & updateEntryRecursive
@@ -200,12 +212,13 @@ namespace Init {
     }
 
     [[nodiscard]] std::size_t InitSection::sizeRecursive() const noexcept {
-        return entries.size() +
-               std::accumulate(
-                   std::begin(subsections), std::end(subsections), 0, [] (auto acc, auto s) {
-                       return acc + s.second.size();
-                   }
-               );
+        using Private::accumulate;
+        return entries.size() + accumulate(subsections, 0uz, [] (auto acc, auto s) { return acc + s.second.sizeRecursive(); });
+        // std::accumulate(
+        // std::begin(subsections), std::end(subsections), 0, [] (auto acc, auto s) {
+        // return acc + s.second.size();
+        // }
+        // );
     }
 
     [[nodiscard]] InitSection const& InitSection::getSubsection(std::string const& key) const {
@@ -220,7 +233,7 @@ namespace Init {
         std::string spacing(level * 4, ' ');
         os << spacing << std::string(level, '[') << name << std::string(level, ']') << std::endl;
         for (auto const& entry: entries) {
-            os << spacing << entry.first << "=" << entry.second.value() << std::endl;
+            os << spacing << InitFile::escaped(entry.first) << "=" << InitFile::escaped(entry.second.value()) << std::endl;
         }
         for (auto const& [name, section]: subsections) {
             section.print(os, level + 1);

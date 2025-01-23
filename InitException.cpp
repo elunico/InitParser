@@ -8,7 +8,7 @@ namespace Init {
     InitException::InitException(std::string const& w) : message(w) {}
 
 
-    char const *InitException::what() const noexcept  {
+    char const *InitException::what() const noexcept {
         return message.c_str();
     }
 

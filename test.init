@@ -17,7 +17,8 @@ k3=v3 ; comment here
         k=1
             [[[3bracket section]]]
             some3key=otherval
-            other=val
+            key2=1
+            oter=val
             [[[~]]]
         k2=2
     [~]
