@@ -31,7 +31,7 @@ namespace Init {
             int                             n
         );
 
-        bool isDefaultNamed() const;
+        [[nodiscard]] bool isDefaultNamed() const;
 
     public:
         friend class InitFile;
@@ -53,11 +53,11 @@ namespace Init {
 
         [[nodiscard]] ResolutionType canResolve(std::string const& path) const;
 
-        InitEntry const& getEntryExact(std::string const& path) const;
+        [[nodiscard]] InitEntry const& getEntryExact(std::string const& path) const;
 
         InitEntry& getEntryExact(std::string const& path);
 
-        InitSection const& getSectionExact(std::string const& path) const;
+        [[nodiscard]] InitSection const& getSectionExact(std::string const& path) const;
 
         InitSection& getSectionExact(std::string const& path);
 

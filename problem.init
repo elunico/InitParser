@@ -1,0 +1,16 @@
+[Server-URL]
+hostname=url.eluni.co
+local_port=7777
+[[auth]]
+auth=off
+[[routes]]
+[[[index]]]
+static=true
+file=index.html
+[[[all]]]
+static=false
+run=all.php
+[[[[auth]]]]
+un=required
+pw=required
+[[~]]

@@ -58,36 +58,49 @@ void old_test(Init::InitFile f) {
 }
 
 
+#include "InitEntry.h"
+#include "InitSection.h"
+#include <ostream>
+#include <vector>
+
+std::ostream& operator<<(std::ostream& os, Init::InitEntry const& s) {
+    os << s.key() << " = " << s.value() << std::endl;
+    return os;
+}
+
+// template <typename T>
+// std::ostream& operator<<(std::ostream& os, std::vector<T> const& v) {
+    // os << "[";
+    // for (auto const& e: v) {
+        // os << e << ", ";
+    // }
+    // os << "]";
+    // return os;
+// }
+
 int main(int argc, char const *argv[]) {
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0] << " <file>" << std::endl;
         return 1;
     }
-    try {
-        auto f = Init::InitFile::parse(argv[1]);
-        f.print();
-    } catch (Init::InitException const& e) {
-        std::cerr << e.what() << std::endl;
-        throw;
-    }
 
-    // auto yes_entry        = f.sections().canResolve("Section1/section1-3/srk1");
-    // auto yes_entry_middle = f.sections().canResolve("Section1/sk1");
-    // auto yes_section      = f.sections().canResolve("Section1/section1-3");
-    // auto no1              = f.sections().canResolve("Section1/section1-3/doesnotexist/srk1");
-    // auto no2              = f.sections().canResolve("fails/section1-3/doesnotexist/srk1");
-    // auto default_entry    = f.sections().canResolve("k1");
-    // auto default_no       = f.sections().canResolve("missingkey");
-    //
-    // std::cout << "yes_entry: " << yes_entry << std::endl;
-    // std::cout << "yes_entry_middle: " << yes_entry_middle << std::endl;
-    // std::cout << "yes_section: " << yes_section << std::endl;
-    // std::cout << "no1: " << no1 << std::endl;
-    // std::cout << "no2: " << no2 << std::endl;
-    // std::cout << "default_entry: " << default_entry << std::endl;
-    // std::cout << "default_no: " << default_no << std::endl;
-    //
-    // f.sections().updateEntryRecursive("Section1", "sk1", "this is my value");
+    auto file = Init::InitFile::parse("../problem.init");
+
+    auto f = file.sections().getEntryExact("Server-URL/routes/index/file");
+    file.sections().updateEntryRecursive(
+        "Server-URL/routes/index/file",
+        "test.html"
+    );
+    auto o = file.sections().getPathToEntry("auth");
+    file.sections().updateEntryRecursive(*o, "some-other-file.html");
+    std::cout << f.value() << std::endl;
+
+    auto e = file.sections().getEntryExact("Server-URL/hostname");
+
+    std::ofstream of;
+    of.open("testout.init");
+
+    file.print(of);
 
 
     return 0;

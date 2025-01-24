@@ -86,7 +86,7 @@ namespace Init {
     std::vector<char> const InitFile::ESCAPE_CHARS{{'=', ';', '\\'}};
 
     bool InitFile::is_escape_char(char c) {
-        for (auto const& e: InitFile::ESCAPE_CHARS) {
+        for (auto const& e: ESCAPE_CHARS) {
             if (c == e) {
                 return true;
             }
@@ -108,11 +108,12 @@ namespace Init {
 
     std::string InitFile::escaped(std::string const& key) {
         std::string result{};
-        for (int i = 0; i < key.size(); i++) {
-            if (is_escape_char(key[i])) {
+        for (char const i : key) {
+            std::cout<< "Key: " << key << " key[i]: " << i << std::endl;
+            if (is_escape_char(i)) {
                 result.push_back('\\');
             }
-            result.push_back(key[i]);
+            result.push_back(i);
         }
         return result;
     }
@@ -131,6 +132,11 @@ namespace Init {
 
         while (s.good() && !s.eof()) {
             int c = s.get();
+
+            // eof check if there are blank lines
+            if (c == EOF) {
+                continue;
+            }
 
             // allows us to use whitespace for nesting in the init file.
             // ignore line initial whitespace

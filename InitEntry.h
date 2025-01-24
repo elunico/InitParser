@@ -16,11 +16,11 @@ namespace Init {
 
         InitEntry(std::string key, std::string value);
 
-        InitEntry(const InitEntry& other) = default;
+        InitEntry(InitEntry const& other) = default;
 
         InitEntry(InitEntry&& other) = default;
 
-        InitEntry& operator=(const InitEntry& other) = default;
+        InitEntry& operator=(InitEntry const& other) = default;
 
         InitEntry& operator=(InitEntry&& other) = default;
 

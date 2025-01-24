@@ -253,13 +253,8 @@ namespace Init {
     [[nodiscard]] std::size_t InitSection::sizeRecursive() const noexcept {
         using Private::accumulate;
         return entries.size() + accumulate(
-                   subsections, 0uz, [] (auto acc, auto s) { return acc + s.second.sizeRecursive(); }
+                   subsections, 0uz, [] (auto acc, auto const& s) { return acc + s.second.sizeRecursive(); }
                );
-        // std::accumulate(
-        // std::begin(subsections), std::end(subsections), 0, [] (auto acc, auto s) {
-        // return acc + s.second.size();
-        // }
-        // );
     }
 
     [[nodiscard]] InitSection const& InitSection::getSubsection(std::string const& key) const {
@@ -273,8 +268,8 @@ namespace Init {
     void InitSection::print(std::ostream& os, int level) const {
         std::string spacing(level * 4, ' ');
         os << spacing << std::string(level, '[') << name << std::string(level, ']') << std::endl;
-        for (auto const& entry: entries) {
-            os << spacing << InitFile::escaped(entry.first) << "=" << InitFile::escaped(entry.second.value()) <<
+        for (auto const& [name, entry]: entries) {
+            os << spacing << (entry.key()) << "=" << (entry.value()) <<
                     std::endl;
         }
         for (auto const& [name, section]: subsections) {
