@@ -7,14 +7,22 @@
 #include <string>
 
 namespace Init {
+    class InitSection;
+
     class InitEntry {
+        friend class InitSection;
+
         std::string m_key;
         std::string m_value;
+
+        InitSection *m_parent;
 
     public:
         InitEntry();
 
         InitEntry(std::string key, std::string value);
+
+        InitEntry(std::string&& key, std::string&& value);
 
         InitEntry(InitEntry const& other) = default;
 
@@ -23,6 +31,8 @@ namespace Init {
         InitEntry& operator=(InitEntry const& other) = default;
 
         InitEntry& operator=(InitEntry&& other) = default;
+
+        [[nodiscard]] InitSection *parent() const;
 
         [[nodiscard]] std::string const& key() const;
 

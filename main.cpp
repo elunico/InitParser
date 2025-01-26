@@ -35,16 +35,20 @@ void old_test(Init::InitFile f) {
 
     std::cout << path << std::endl;
 
-    auto value = f.sections().getEntryRecursive("srk1");
+    auto p     = f.sections().getPathToEntry("srk1");
+    if (!p.has_value()) {
+        throw std::runtime_error("No such entry");
+    }
+    auto value = f.sections().getEntryExact(*p);
 
     std::cout << value << std::endl;
 
     std::cout << f.sections().hasEntry("srk1") << std::endl;
-    std::cout << f.sections().hasEntryRecursive("srk1") << std::endl;
+    std::cout << (f.sections().canResolve("srk1") == Init::InitSection::ResolutionType::ENTRY) << std::endl;
 
-    f.sections().updateEntryRecursive(path.value(), "anewtestingvalue");
+    f.sections().updateEntryExact(path.value(), "anewtestingvalue");
 
-    auto e = f.sections().getEntryRecursive("srk1");
+    auto e = f.sections().getEntryExact("srk1");
     std::cout << e.value() << std::endl;
 
     std::ofstream out{};
@@ -70,12 +74,12 @@ std::ostream& operator<<(std::ostream& os, Init::InitEntry const& s) {
 
 // template <typename T>
 // std::ostream& operator<<(std::ostream& os, std::vector<T> const& v) {
-    // os << "[";
-    // for (auto const& e: v) {
-        // os << e << ", ";
-    // }
-    // os << "]";
-    // return os;
+// os << "[";
+// for (auto const& e: v) {
+// os << e << ", ";
+// }
+// os << "]";
+// return os;
 // }
 
 int main(int argc, char const *argv[]) {
@@ -87,12 +91,12 @@ int main(int argc, char const *argv[]) {
     auto file = Init::InitFile::parse("../problem.init");
 
     auto f = file.sections().getEntryExact("Server-URL/routes/index/file");
-    file.sections().updateEntryRecursive(
+    file.sections().updateEntryExact(
         "Server-URL/routes/index/file",
         "test.html"
     );
     auto o = file.sections().getPathToEntry("auth");
-    file.sections().updateEntryRecursive(*o, "some-other-file.html");
+    file.sections().updateEntryExact(*o, "some-other-file.html");
     std::cout << f.value() << std::endl;
 
     auto e = file.sections().getEntryExact("Server-URL/hostname");

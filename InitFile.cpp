@@ -7,6 +7,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <algorithm>
 
 namespace Init {
     namespace Util {
@@ -86,12 +87,14 @@ namespace Init {
     std::vector<char> const InitFile::ESCAPE_CHARS{{'=', ';', '\\'}};
 
     bool InitFile::is_escape_char(char c) {
-        for (auto const& e: ESCAPE_CHARS) {
-            if (c == e) {
-                return true;
-            }
-        }
-        return false;
+        return std::ranges::any_of(ESCAPE_CHARS, [c](char e) { return c == e; });
+
+        // for (auto const& e: ESCAPE_CHARS) {
+            // if (c == e) {
+                // return true;
+            // }
+        // }
+        // return false;
     }
 
     void InitFile::pop_section(std::vector<InitSection *>& secstack) {
@@ -108,8 +111,8 @@ namespace Init {
 
     std::string InitFile::escaped(std::string const& key) {
         std::string result{};
-        for (char const i : key) {
-            std::cout<< "Key: " << key << " key[i]: " << i << std::endl;
+        for (char const i: key) {
+            std::cout << "Key: " << key << " key[i]: " << i << std::endl;
             if (is_escape_char(i)) {
                 result.push_back('\\');
             }

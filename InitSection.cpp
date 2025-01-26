@@ -8,6 +8,7 @@
 #include <iostream>
 #include <numeric>
 #include <concepts>
+#include <algorithm>
 #include <utility>
 #include "InitEntry.h"
 #include "InitException.h"
@@ -46,7 +47,13 @@ namespace Init {
     InitSection::InitSection(std::string name) noexcept : name(std::move(name)) {}
 
     void InitSection::addEntry(InitEntry const& entry) {
-        entries[entry.key()] = entry;
+        entries[entry.key()]          = entry;
+        entries[entry.key()].m_parent = this;
+    }
+
+    void InitSection::addEntry(InitEntry&& entry) {
+        entries[entry.key()]          = std::move(entry);
+        entries[entry.key()].m_parent = this;
     }
 
     [[nodiscard]] std::optional<std::vector<InitSection::InitSectionName> >
@@ -63,17 +70,12 @@ namespace Init {
         return entries.contains(name);
     }
 
-    [[nodiscard]] bool InitSection::hasEntryRecursive(std::string const& key) const {
-        if (entries.contains(key)) {
-            return true;
-        }
-        return std::ranges::any_of(
-            subsections,
-            [&key] (std::pair<std::string, InitSection> const& p) {
-                auto const& [name, section] = p;
-                return section.hasEntryRecursive(key);
-            }
-        );
+    bool InitSection::hasEntryExact(std::string const& path) const {
+        return canResolve(path) == ResolutionType::ENTRY;
+    }
+
+    bool InitSection::hasEntryExact(std::vector<std::string> const& path) const {
+        canResolve()
     }
 
     [[nodiscard]] std::pair<InitSection::ResolutionType, void *> InitSection::canResolveHelper(
@@ -97,7 +99,7 @@ namespace Init {
         // the default section - parent to all subsections implicitly - is not named in a path
         // and so it is always acceptable to traverse down that section
         if ((name == path[n] && n != path.size() - 1) || isDefaultNamed()) {
-            for (auto & [name, section]: subsections) {
+            for (auto& [name, section]: subsections) {
                 if (auto res = section.canResolveHelper(path, (isDefaultNamed()) ? n : (n + 1));
                     res.first != ResolutionType::NONE) {
                     return res;
@@ -116,7 +118,11 @@ namespace Init {
     [[nodiscard]] InitSection::ResolutionType InitSection::canResolve(std::string const& path) const {
         auto p = path_to_components(path);
         // method is const
-        return const_cast<InitSection*>(this)->canResolveHelper(p, 0).first;
+        return canResolve(p);
+    }
+
+    [[nodiscard]] InitSection::ResolutionType InitSection::canResolve(std::vector<std::string> const& path) const {
+        return const_cast<InitSection *>(this)->canResolveHelper(path, 0).first;
     }
 
     [[nodiscard]] InitEntry& InitSection::getEntryExact(std::string const& path) {
@@ -135,7 +141,15 @@ namespace Init {
 
     [[nodiscard]] InitSection& InitSection::getSectionExact(std::string const& path) {
         auto p = path_to_components(path);
-        switch (auto [kind, ptr] = canResolveHelper(p, 0); kind) {
+        return getSectionExact(p);
+    }
+
+    InitSection const& InitSection::getSectionExact(std::vector<std::string> const& path) const {
+        return const_cast<InitSection *>(this)->getSectionExact(path);
+    }
+
+    InitSection& InitSection::getSectionExact(std::vector<std::string> const& path) {
+        switch (auto [kind, ptr] = canResolveHelper(path, 0); kind) {
             case ResolutionType::NONE:
                 throw MissingEntry("InitSection::getSectionExact: no such section");
             case ResolutionType::SECTION:
@@ -169,18 +183,6 @@ namespace Init {
             s.push_back(entry);
         }
         return s;
-    }
-
-    [[nodiscard]] std::optional<std::string> InitSection::getEntryRecursive(std::string const& key) const {
-        if (entries.contains(key)) {
-            return entries.at(key).value();
-        }
-        for (auto const& [name, subsec]: subsections) {
-            if (subsec.hasEntryRecursive(key)) {
-                return subsec.getEntryRecursive(key);
-            }
-        }
-        return std::nullopt;
     }
 
     [[nodiscard]] std::vector<InitEntry> InitSection::getAllEntriesRecursive() const {
@@ -228,11 +230,11 @@ namespace Init {
         return result;
     }
 
-    bool InitSection::updateEntryRecursive(std::string const& path, std::string const& value) {
-        return updateEntryRecursive(path_to_components(path), value);
+    bool InitSection::updateEntryExact(std::string const& path, std::string const& value) {
+        return updateEntryExact(path_to_components(path), value);
     }
 
-    bool InitSection::updateEntryRecursive(
+    bool InitSection::updateEntryExact(
         std::vector<std::string> const& section_path,
         std::string const&              value
     ) {

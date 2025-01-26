@@ -44,6 +44,8 @@ namespace Init {
 
         void addEntry(InitEntry const& entry);
 
+        void addEntry(InitEntry&& entry);
+
         /// this function returns the names of nested sections required to traverse to get the `key`
         /// if the key exists in the default section an empty vector is returned
         /// if std::nullopt is returned the key does not exist in the file
@@ -53,6 +55,8 @@ namespace Init {
 
         [[nodiscard]] ResolutionType canResolve(std::string const& path) const;
 
+        [[nodiscard]] ResolutionType canResolve(std::vector<std::string> const& path) const;
+
         [[nodiscard]] InitEntry const& getEntryExact(std::string const& path) const;
 
         InitEntry& getEntryExact(std::string const& path);
@@ -61,23 +65,27 @@ namespace Init {
 
         InitSection& getSectionExact(std::string const& path);
 
+        [[nodiscard]] InitSection const& getSectionExact(std::vector<std::string> const& path) const;
+
+        InitSection& getSectionExact(std::vector<std::string> const& path);
+
         [[nodiscard]] bool hasEntry(std::string const& name) const;
 
-        [[nodiscard]] bool hasEntryRecursive(std::string const& key) const;
+        [[nodiscard]] bool hasEntryExact(std::string const& path) const;
+
+        [[nodiscard]] bool hasEntryExact(std::vector<std::string> const& path) const;
 
         [[nodiscard]] std::optional<std::string> getEntry(std::string const& key) const;
 
         [[nodiscard]] std::vector<InitEntry> getAllEntries() const;
 
-        [[nodiscard]] std::optional<std::string> getEntryRecursive(std::string const& key) const;
-
         [[nodiscard]] std::vector<InitEntry> getAllEntriesRecursive() const;
 
         bool updateEntry(std::string const& key, std::string const& value);
 
-        bool updateEntryRecursive(std::string const& path, std::string const& value);
+        bool updateEntryExact(std::string const& path, std::string const& value);
 
-        bool updateEntryRecursive(
+        bool updateEntryExact(
             std::vector<std::string> const& section_path,
             std::string const&              value
         );
@@ -89,6 +97,23 @@ namespace Init {
         [[nodiscard]] InitSection const& getSubsection(std::string const& key) const;
 
         [[nodiscard]] InitSection& getSubsection(std::string const& key);
+
+        template <typename Callable> requires std::is_invocable_v<Callable, InitEntry&>
+        void breadth_first_visit(Callable l) {
+            for (auto& [name, entry]: entries) {
+                l(entry);
+            }
+            std::deque<InitSection> sections{};
+            sections.insert(sections.end(), subsections.begin(), subsections.end());
+            while (!sections.empty()) {
+                auto& s = sections.front();
+                sections.pop_front();
+                for (auto& [name, entry]: s.entries) {
+                    l(entry);
+                }
+                sections.insert(sections.end(), s.subsections.begin(), s.subsections.end());
+            }
+        }
 
         void print(std::ostream& os = std::cout, int level = 1) const;
     };

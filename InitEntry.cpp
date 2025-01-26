@@ -12,6 +12,12 @@ namespace Init {
 
     InitEntry::InitEntry(std::string key, std::string value) : m_key(std::move(key)), m_value(std::move(value)) {}
 
+    InitEntry::InitEntry(std::string&& key, std::string&& value) : m_key(std::move(key)), m_value(std::move(value)) {}
+
+    InitSection  *InitEntry::parent() const {
+        return m_parent;
+    }
+
     [[nodiscard]] std::string const& InitEntry::key() const {
         return m_key;
     }

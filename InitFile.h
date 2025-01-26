@@ -23,7 +23,7 @@ namespace Init {
 
         InitSection& sections() noexcept;
 
-        InitSection const& sections() const noexcept;
+        [[nodiscard]] InitSection const& sections() const noexcept;
 
         static std::string escaped(std::string const& key);
 

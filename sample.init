@@ -1,0 +1,10 @@
+default_key1=some_value1
+default_key2=some_value2
+[Subseciton1]
+sskey1=v1
+sskey2=v2
+[[Subsection1-1]]
+s11k=100
+s11k2=200
+[Subsection2]
+lastkey=lastvalue
