@@ -75,7 +75,7 @@ namespace Init {
     }
 
     bool InitSection::hasEntryExact(std::vector<std::string> const& path) const {
-        canResolve()
+        return canResolve(path) == ResolutionType::ENTRY;
     }
 
     [[nodiscard]] std::pair<InitSection::ResolutionType, void *> InitSection::canResolveHelper(
@@ -127,7 +127,15 @@ namespace Init {
 
     [[nodiscard]] InitEntry& InitSection::getEntryExact(std::string const& path) {
         auto p = path_to_components(path);
-        switch (auto [kind, ptr] = canResolveHelper(p, 0); kind) {
+        return getEntryExact(p);
+    }
+
+    InitEntry const & InitSection::getEntryExact(std::vector<std::string> const &path) const {
+        return const_cast<InitSection *>(this)->getEntryExact(path);
+    }
+
+    InitEntry & InitSection::getEntryExact(std::vector<std::string> const &path) {
+        switch (auto [kind, ptr] = canResolveHelper(path, 0); kind) {
             case ResolutionType::NONE:
                 throw MissingEntry("InitSection::getEntryExact: no such entry");
             case ResolutionType::SECTION:

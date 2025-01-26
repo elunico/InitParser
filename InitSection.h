@@ -45,7 +45,7 @@ namespace Init {
         void addEntry(InitEntry const& entry);
 
         void addEntry(InitEntry&& entry);
-
+        
         /// this function returns the names of nested sections required to traverse to get the `key`
         /// if the key exists in the default section an empty vector is returned
         /// if std::nullopt is returned the key does not exist in the file
@@ -60,6 +60,10 @@ namespace Init {
         [[nodiscard]] InitEntry const& getEntryExact(std::string const& path) const;
 
         InitEntry& getEntryExact(std::string const& path);
+
+        [[nodiscard]] InitEntry const& getEntryExact(std::vector<std::string> const& path) const;
+
+        InitEntry& getEntryExact(std::vector<std::string> const& path);
 
         [[nodiscard]] InitSection const& getSectionExact(std::string const& path) const;
 

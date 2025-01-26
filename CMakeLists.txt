@@ -14,7 +14,8 @@ add_library(InitParserCPP STATIC InitEntry.cpp
         InitUtils.cpp
         InitUtils.h
         InitException.cpp
-        InitException.h)
+        InitException.h
+)
 
 add_executable(initparserxx main.cpp
         InitEntry.cpp
@@ -26,4 +27,5 @@ add_executable(initparserxx main.cpp
         InitUtils.cpp
         InitUtils.h
         InitException.cpp
-        InitException.h)
+        InitException.h
+)
