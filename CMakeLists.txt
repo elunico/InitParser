@@ -3,7 +3,7 @@ project(initparserxx)
 
 set(CMAKE_CXX_STANDARD 23)
 
-set(CMAKE_CXX_FLAGS "-fsanitize=undefined -fsanitize=address ${CMAKE_CXX_FLAGS}")
+# set(CMAKE_CXX_FLAGS "-fsanitize=undefined -fsanitize=address ${CMAKE_CXX_FLAGS}")
 
 add_library(InitParserCPP STATIC InitEntry.cpp
                 InitEntry.h

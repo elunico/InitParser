@@ -4,8 +4,10 @@
 
 #include "InitException.h"
 
+#include <utility>
+
 namespace Init {
-    InitException::InitException(std::string const& w) : message(w) {}
+    InitException::InitException(std::string  w) : message(std::move(w)) {}
 
 
     char const *InitException::what() const noexcept {

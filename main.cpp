@@ -53,11 +53,11 @@ void old_test(Init::InitFile f) {
     std::cout << value << std::endl;
 
     std::cout << f.sections().hasEntry("srk1") << std::endl;
-    std::cout << (f.sections().canResolve("srk1") == Init::InitSection::ResolutionType::ENTRY) << std::endl;
+    std::cout << (f.sections().canResolve({"srk1"}) == Init::InitSection::ResolutionType::ENTRY) << std::endl;
 
     f.sections().updateEntryExact(path.value(), "anewtestingvalue");
 
-    auto e = f.sections().getEntryExact("srk1");
+    auto e = f.sections().getEntryExact({"srk1"});
     std::cout << e.value() << std::endl;
 
     std::ofstream out{};
@@ -78,7 +78,7 @@ int main(int argc, char const *argv[]) {
 
     auto file = Init::InitFile::parse("../problem.init");
 
-    auto const& f = file.sections().getEntryExact("Server-URL/routes/index/file");
+    auto const& f = file.sections().getEntryExact({"Server-URL","routes","index","file"});
     file.sections().updateEntryExact(
         "Server-URL/routes/index/file",
         "test.html"
@@ -87,7 +87,8 @@ int main(int argc, char const *argv[]) {
     file.sections().updateEntryExact(*o, "some-other-file.html");
     std::cout << f.value() << std::endl;
 
-    auto& e = file.sections().getEntryExact("Server-URL/hostname");
+    auto& e = file.sections().getEntryExact({"Server-URL","hostname"});
+    e.value() = "some-other-hostname.html";
 
     std::ofstream of;
     of.open("testout.init");

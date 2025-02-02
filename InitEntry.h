@@ -15,14 +15,14 @@ namespace Init {
         std::string m_key;
         std::string m_value;
 
-        InitSection *m_parent;
+        InitSection *m_parent{};
 
     public:
         InitEntry();
 
         InitEntry(std::string key, std::string value);
 
-        InitEntry(std::string&& key, std::string&& value);
+        InitEntry(std::pair<std::string, std::string> const& p);
 
         InitEntry(InitEntry const& other) = default;
 
@@ -35,8 +35,6 @@ namespace Init {
         [[nodiscard]] InitSection *parent() const;
 
         [[nodiscard]] std::string const& key() const;
-
-        [[nodiscard]] std::string& key();
 
         [[nodiscard]] std::string const& value() const;
 

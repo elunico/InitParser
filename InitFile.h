@@ -19,7 +19,7 @@ namespace Init {
 
         static std::vector<char> const ESCAPE_CHARS;
 
-        static InitFile parse(const std::string& fileName);
+        static InitFile parse(std::string const& fileName);
 
         InitSection& sections() noexcept;
 

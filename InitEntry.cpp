@@ -10,19 +10,16 @@
 namespace Init {
     InitEntry::InitEntry() = default;
 
-    InitEntry::InitEntry(std::string key, std::string value) : m_key(std::move(key)), m_value(std::move(value)) {}
+    InitEntry::InitEntry(std::string  key, std::string  value) : m_key(std::move(key)), m_value(std::move(value)) {}
 
-    InitEntry::InitEntry(std::string&& key, std::string&& value) : m_key(std::move(key)), m_value(std::move(value)) {}
+    InitEntry::InitEntry(std::pair<std::string, std::string> const& p) : m_key(p.first),
+                                                                         m_value(p.second) {}
 
-    InitSection  *InitEntry::parent() const {
+    InitSection *InitEntry::parent() const {
         return m_parent;
     }
 
     [[nodiscard]] std::string const& InitEntry::key() const {
-        return m_key;
-    }
-
-    [[nodiscard]] std::string& InitEntry::key() {
         return m_key;
     }
 

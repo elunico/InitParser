@@ -31,6 +31,40 @@ namespace Init {
             int                             n
         );
 
+        template <class It>
+        [[nodiscard]] std::pair<ResolutionType, void *> canResolveHelper(
+            It start,
+            It end
+        ) {
+            if (start >= end) {
+                return std::make_pair(ResolutionType::NONE, nullptr);
+            }
+            if (start == (end - 1)) {
+                if (name == *start) {
+                    return std::make_pair(ResolutionType::SECTION, this);
+                }
+                for (auto& [name, entry]: entries) {
+                    if (name == *start) {
+                        return std::make_pair(ResolutionType::ENTRY, &entry);
+                    }
+                }
+                return std::make_pair(ResolutionType::NONE, nullptr);
+            }
+            // the default section - parent to all subsections implicitly - is not named in a path
+            // and so it is always acceptable to traverse down that section
+            if ((name == *start && start != end - 1) || isDefaultNamed()) {
+                for (auto& [name, section]: subsections) {
+                    if (auto res = section.canResolveHelper(isDefaultNamed() ? start : start + 1, end);
+                        res.first != ResolutionType::NONE) {
+                        return res;
+                    }
+                }
+                // finally if this is the last section, check for an entry
+                return canResolveHelper(start + 1, end);
+            }
+            return std::make_pair(ResolutionType::NONE, nullptr);
+        }
+
         [[nodiscard]] bool isDefaultNamed() const;
 
     public:
@@ -42,10 +76,12 @@ namespace Init {
 
         explicit InitSection(std::string name) noexcept;
 
+        void createEntry(std::string const& key, std::string const& value);
+
         void addEntry(InitEntry const& entry);
 
         void addEntry(InitEntry&& entry);
-        
+
         /// this function returns the names of nested sections required to traverse to get the `key`
         /// if the key exists in the default section an empty vector is returned
         /// if std::nullopt is returned the key does not exist in the file
@@ -72,6 +108,12 @@ namespace Init {
         [[nodiscard]] InitSection const& getSectionExact(std::vector<std::string> const& path) const;
 
         InitSection& getSectionExact(std::vector<std::string> const& path);
+
+        InitSection& createSubsection(std::string const& name);
+
+        bool removeSubsection(std::string const& name);
+
+        bool removeEntry(std::string const& key);
 
         [[nodiscard]] bool hasEntry(std::string const& name) const;
 
@@ -101,6 +143,8 @@ namespace Init {
         [[nodiscard]] InitSection const& getSubsection(std::string const& key) const;
 
         [[nodiscard]] InitSection& getSubsection(std::string const& key);
+
+        static void print_with_escapes(std::ostream& os, std::string const& s);
 
         template <typename Callable> requires std::is_invocable_v<Callable, InitEntry&>
         void breadth_first_visit(Callable l) {

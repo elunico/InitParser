@@ -12,9 +12,9 @@ namespace Init {
     public:
         std::string message;
 
-        explicit InitException(std::string const& w);
+        explicit InitException(std::string  w);
 
-        virtual char const *what() const noexcept override;
+        [[nodiscard]] virtual char const *what() const noexcept override;
 
         virtual ~InitException() override;
     };
